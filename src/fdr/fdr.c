@@ -133,7 +133,7 @@ u64a andn(const u32 a, const u8 *b) {
                          : "=r"(r)
                          : "r"(a), "m"(*(const u32 *)b)
                          : "w0"
-    );	
+    );
 #else
     r = unaligned_load_u32(b) & ~a;
 #endif
@@ -345,7 +345,6 @@ void get_conf_stride_1(const u8 *itPtr, UNUSED const u8 *start_ptr,
     *conf8 = movq(*s);
     *s = rshiftbyte_m128(*s, 8);
     *conf8 ^= ~0ULL;
-
 #endif
 }
 

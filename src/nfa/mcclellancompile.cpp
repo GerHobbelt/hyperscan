@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018, Intel Corporation
+ * Copyright (c) 2015-2021, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -463,7 +463,7 @@ unique_ptr<raw_report_info> mcclellan_build_strat::gatherReports(
         *isSingleReport = 0;
     }
 
-    return move(ri);
+    return ri;
 }
 
 u32 raw_report_info_impl::getReportListSize() const {
@@ -1082,7 +1082,9 @@ void find_better_daddy(dfa_info &info, dstate_id_t curr_id, bool using8bit,
         // Use the daddy already set for this state so long as it isn't already
         // a Sherman state.
         dstate_id_t daddy = currState.daddy;
-        if (!info.is_sherman(daddy) && !info.is_widestate(daddy)) {
+        if (info.is_widestate(daddy)) {
+            return;
+        } else if (!info.is_sherman(daddy)) {
             hinted.insert(currState.daddy);
         } else {
             // Fall back to granddaddy, which has already been processed (due
@@ -1477,6 +1479,7 @@ bytecode_ptr<NFA> mcclellanCompile_i(raw_dfa &raw, accel_dfa_build_strat &strat,
 
     bytecode_ptr<NFA> nfa;
     if (!using8bit) {
+        // Wide state optimization
         if (cc.grey.allowWideStates && strat.getType() == McClellan
             && !is_triggered(raw.kind)) {
             find_wide_state(info);
@@ -1486,19 +1489,22 @@ bytecode_ptr<NFA> mcclellanCompile_i(raw_dfa &raw, accel_dfa_build_strat &strat,
         bool any_cyclic_near_anchored_state
             = is_cyclic_near(raw, raw.start_anchored);
 
-        for (u32 i = 0; i < info.size(); i++) {
-            if (info.is_widestate(i)) {
-                continue;
+        // Sherman optimization
+        if (info.impl_alpha_size > 16) {
+            for (u32 i = 0; i < info.size(); i++) {
+                if (info.is_widestate(i)) {
+                    continue;
+                }
+                find_better_daddy(info, i, using8bit,
+                                  any_cyclic_near_anchored_state,
+                                  trust_daddy_states, cc.grey);
+                total_daddy += info.extra[i].daddytaken;
             }
-            find_better_daddy(info, i, using8bit,
-                              any_cyclic_near_anchored_state,
-                              trust_daddy_states, cc.grey);
-            total_daddy += info.extra[i].daddytaken;
-        }
 
-        DEBUG_PRINTF("daddy %hu/%zu states=%zu alpha=%hu\n", total_daddy,
-                     info.size() * info.impl_alpha_size, info.size(),
-                     info.impl_alpha_size);
+            DEBUG_PRINTF("daddy %hu/%zu states=%zu alpha=%hu\n", total_daddy,
+                         info.size() * info.impl_alpha_size, info.size(),
+                         info.impl_alpha_size);
+        }
 
         nfa = mcclellanCompile16(info, cc, accel_states);
     } else {

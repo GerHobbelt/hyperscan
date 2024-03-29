@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019, Intel Corporation
+ * Copyright (c) 2018-2020, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -33,6 +33,7 @@
 #include "parser/parse_error.h"
 #include "util/container.h"
 #include "hs_compile.h"
+#include "allocator.h"
 
 #include <vector>
 
@@ -139,7 +140,8 @@ void ParsedLogical::validateSubIDs(const unsigned *ids,
         }
         hs_compile_error_t *compile_err = NULL;
         hs_expr_info_t *info = NULL;
-        hs_error_t err = hs_expression_info(expressions[i], flags[i], &info,
+        hs_error_t err = hs_expression_info(expressions[i],
+                                            flags ? flags[i] : 0, &info,
                                             &compile_err);
         if (err != HS_SUCCESS) {
             hs_free_compile_error(compile_err);
@@ -151,7 +153,7 @@ void ParsedLogical::validateSubIDs(const unsigned *ids,
             if (info->unordered_matches) {
                 throw CompileError("Have unordered match in sub-expressions.");
             }
-            free(info);
+            hs_misc_free(info);
         }
     }
 }

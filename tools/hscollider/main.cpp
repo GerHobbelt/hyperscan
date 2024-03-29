@@ -1831,11 +1831,11 @@ unique_ptr<CorporaSource> buildCorpora(const vector<string> &corporaFiles,
                 exit_with_fail();
             }
         }
-        return move(c); /* move allows unique_ptr<CorporaSource> conversion */
+        return c; /* move allows unique_ptr<CorporaSource> conversion */
     } else {
         auto c = ue2::make_unique<NfaGeneratedCorpora>(
             exprMap, corpus_gen_prop, force_utf8, force_prefilter);
-        return move(c);
+        return c;
     }
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2020, Intel Corporation
+ * Copyright (c) 2015-2021, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -748,10 +748,7 @@ hs_error_t HS_CDECL hs_free_compile_error(hs_compile_error_t *error);
  *       - HS_FLAG_PREFILTER - Compile pattern in prefiltering mode.
  *       - HS_FLAG_SOM_LEFTMOST - Report the leftmost start of match offset
  *                                when a match is found.
- *       - HS_FLAG_COMBINATION - Parse the expression in logical combination
- *                               syntax.
- *       - HS_FLAG_QUIET - Ignore match reporting for this expression. Used for
- *                         the sub-expressions in logical combinations.
+ *       - HS_FLAG_QUIET - This flag will be ignored.
  *
  * @param info
  *      On success, a pointer to the pattern information will be returned in
@@ -814,10 +811,7 @@ hs_error_t HS_CDECL hs_expression_info(const char *expression,
  *       - HS_FLAG_PREFILTER - Compile pattern in prefiltering mode.
  *       - HS_FLAG_SOM_LEFTMOST - Report the leftmost start of match offset
  *                                when a match is found.
- *       - HS_FLAG_COMBINATION - Parse the expression in logical combination
- *                               syntax.
- *       - HS_FLAG_QUIET - Ignore match reporting for this expression. Used for
- *                         the sub-expressions in logical combinations.
+ *       - HS_FLAG_QUIET - This flag will be ignored.
  *
  * @param ext
  *      A pointer to a filled @ref hs_expr_ext_t structure that defines
@@ -1034,6 +1028,15 @@ hs_error_t HS_CDECL hs_populate_platform(hs_platform_info_t *platform);
  */
 #define HS_CPU_FEATURES_AVX512           (1ULL << 3)
 
+/**
+ * CPU features flag - Intel(R) Advanced Vector Extensions 512
+ * Vector Byte Manipulation Instructions (Intel(R) AVX512VBMI)
+ *
+ * Setting this flag indicates that the target platform supports AVX512VBMI
+ * instructions. Using AVX512VBMI implies the use of AVX512.
+ */
+#define HS_CPU_FEATURES_AVX512VBMI       (1ULL << 4)
+
 /** @} */
 
 /**
@@ -1113,6 +1116,22 @@ hs_error_t HS_CDECL hs_populate_platform(hs_platform_info_t *platform);
  * Goldmont microarchitecture.
  */
 #define HS_TUNE_FAMILY_GLM 8
+
+/**
+ * Tuning Parameter - Intel(R) microarchitecture code name Icelake
+ *
+ * This indicates that the compiled database should be tuned for the
+ * Icelake microarchitecture.
+ */
+#define HS_TUNE_FAMILY_ICL 9
+
+/**
+ * Tuning Parameter - Intel(R) microarchitecture code name Icelake Server
+ *
+ * This indicates that the compiled database should be tuned for the
+ * Icelake Server microarchitecture.
+ */
+#define HS_TUNE_FAMILY_ICX 10
 
 /** @} */
 

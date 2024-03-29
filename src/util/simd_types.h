@@ -30,9 +30,9 @@
 #define SIMD_TYPES_H
 
 #include "config.h"
-#include "ue2common.h"
 #include "util/arch.h"
 #include "util/intrinsics.h"
+#include "ue2common.h"
 
 #if defined(HAVE_SSE2)
 typedef __m128i m128;
@@ -54,34 +54,21 @@ typedef float64x2_t __m128d;
 
 typedef __m128i m128;
 #else
-typedef struct ALIGN_DIRECTIVE {
-    u64a hi;
-    u64a lo;
-} m128;
-
+typedef struct ALIGN_DIRECTIVE {u64a hi; u64a lo;} m128;
 #endif
 
 #if defined(HAVE_AVX2)
 typedef __m256i m256;
 #else
-typedef struct ALIGN_AVX_DIRECTIVE {
-    m128 lo;
-    m128 hi;
-} m256;
+typedef struct ALIGN_AVX_DIRECTIVE {m128 lo; m128 hi;} m256;
 #endif
 
-typedef struct {
-    m128 lo;
-    m128 mid;
-    m128 hi;
-} m384;
+typedef struct {m128 lo; m128 mid; m128 hi;} m384;
 #if defined(HAVE_AVX512)
 typedef __m512i m512;
 #else
-typedef struct ALIGN_ATTR(64) {
-    m256 lo;
-    m256 hi;
-} m512;
+typedef struct ALIGN_ATTR(64) {m256 lo; m256 hi;} m512;
 #endif
 
 #endif /* SIMD_TYPES_H */
+

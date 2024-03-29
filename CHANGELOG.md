@@ -2,6 +2,55 @@
 
 This is a list of notable changes to Hyperscan, in reverse chronological order.
 
+## [5.4.2] 2023-04-19
+- Roll back bugfix for github issue #350: Besides using scratch for
+  corresponding database, Hyperscan also allows user to use larger scratch
+  allocated for another database. Users can leverage this property to achieve
+  safe scratch usage in multi-database scenarios. Behaviors beyond these are
+  discouraged and results are undefined.
+- Fix hsdump issue due to invalid nfa type.
+
+## [5.4.1] 2023-02-20
+- The Intel Hyperscan team is pleased to provide a bug fix release to our open source library.
+  Intel also maintains an upgraded version available through your Intel sales representative.
+- Bugfix for issue #184: fix random char value of UTF-8.
+- Bugfix for issue #291: bypass logical combination flag in hs_expression_info().
+- Bugfix for issue #292: fix build error due to libc symbol parsing.
+- Bugfix for issue #302/304: add empty string check for pure literal API.
+- Bugfix for issue #303: fix unknown instruction error in pure literal API.
+- Bugfix for issue #303: avoid memory leak in stream close stage.
+- Bugfix for issue #305: fix assertion failure in DFA construction.
+- Bugfix for issue #317: fix aligned allocator segment faults.
+- Bugfix for issue #350: add quick validity check for scratch.
+- Bugfix for issue #359: fix glibc-2.34 stack size issue.
+- Bugfix for issue #360: fix SKIP flag issue in chimera.
+- Bugfix for issue #362: fix one cotec check corner issue in UTF-8 validation.
+- Fix other compile issues.
+
+## [5.4.0] 2020-12-31
+- Improvement on literal matcher "Fat Teddy" performance, including
+  support for Intel(R) AVX-512 Vector Byte Manipulation Instructions (Intel(R)
+  AVX-512 VBMI).
+- Introduce a new 32-state shuffle-based DFA engine ("Sheng32"). This improves
+  scanning performance by leveraging AVX-512 VBMI.
+- Introduce a new 64-state shuffle-based DFA engine ("Sheng64"). This improves
+  scanning performance by leveraging AVX-512 VBMI.
+- Introduce a new shuffle-based hybrid DFA engine ("McSheng64"). This improves
+  scanning performance by leveraging AVX-512 VBMI.
+- Improvement on exceptional state handling performance for LimEx NFA, including
+  support for AVX-512 VBMI.
+- Improvement on lookaround performance with new models, including support for
+  AVX-512.
+- Improvement on DFA state space efficiency.
+- Optimization on decision of NFA/DFA generation.
+- hsbench: add CSV dump support for hsbench.
+- Bugfix for cmake error on Icelake under release mode.
+- Bugfix in find_vertices_in_cycles() to avoid self-loop checking in SCC.
+- Bugfix for issue #270: fix return value handling in chimera.
+- Bugfix for issue #284: use correct free function in logical combination.
+- Add BUILD_EXAMPLES cmake option to enable example code compilation. (#260)
+- Some typo fixing. (#242, #259)
+
 ## [5.3.0] 2020-05-15
 - Improvement on literal matcher "Teddy" performance, including support for
   Intel(R) AVX-512 Vector Byte Manipulation Instructions (Intel(R) AVX-512
