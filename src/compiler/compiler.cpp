@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2020, Intel Corporation
+ * Copyright (c) 2015-2021, Intel Corporation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -323,7 +323,8 @@ void addExpression(NG &ng, unsigned index, const char *expression,
     }
 
     // Ensure that our pattern isn't too long (in characters).
-    if (strlen(expression) > cc.grey.limitPatternLength) {
+    size_t maxlen = cc.grey.limitPatternLength + 1;
+    if (strnlen(expression, maxlen) >= maxlen) {
         throw CompileError("Pattern length exceeds limit.");
     }
 
@@ -416,6 +417,10 @@ void addLitExpression(NG &ng, unsigned index, const char *expression,
                            "HS_FLAG_SOM_LEFTMOST are supported in literal API.");
     }
 
+    if (!strcmp(expression, "")) {
+        throw CompileError("Pure literal API doesn't support empty string.");
+    }
+
     // This expression must be a pure literal, we can build ue2_literal
     // directly based on expression text.
     ParsedLitExpression ple(index, expression, expLength, flags, id);
@@ -457,6 +462,9 @@ platform_t target_to_platform(const target_t &target_info) {
     }
     if (!target_info.has_avx512()) {
         p |= HS_PLATFORM_NOAVX512;
+    }
+    if (!target_info.has_avx512vbmi()) {
+        p |= HS_PLATFORM_NOAVX512VBMI;
     }
     return p;
 }

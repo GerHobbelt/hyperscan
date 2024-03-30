@@ -2,8 +2,8 @@ cmake_minimum_required (VERSION 2.8.11)
 project (hyperscan C CXX)
 
 set (HS_MAJOR_VERSION 5)
-set (HS_MINOR_VERSION 3)
-set (HS_PATCH_VERSION 0)
+set (HS_MINOR_VERSION 4)
+set (HS_PATCH_VERSION 2)
 set (HS_VERSION ${HS_MAJOR_VERSION}.${HS_MINOR_VERSION}.${HS_PATCH_VERSION})
 
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
@@ -131,8 +131,15 @@ CMAKE_DEPENDENT_OPTION(DUMP_SUPPORT "Dump code support; normally on, except in r
 
 CMAKE_DEPENDENT_OPTION(DISABLE_ASSERTS "Disable assert(); Asserts are enabled in debug builds, disabled in release builds" OFF "NOT RELEASE_BUILD" ON)
 
-option(BUILD_AVX512 "Experimental: support avx512 in the fat runtime" 
+option(BUILD_AVX512 "Experimental: support avx512 in the fat runtime"
     OFF)
+
+option(BUILD_AVX512VBMI "Experimental: support avx512vbmi in the fat runtime"
+    OFF)
+
+if (BUILD_AVX512VBMI)
+    set(BUILD_AVX512 ON)
+endif ()
 
 option(WINDOWS_ICC "Use Intel C++ Compiler on Windows, default off, requires ICC to be set in project" OFF)
 
@@ -182,7 +189,7 @@ else()
         # generic, which isn't very good in some cases. march=native looks at
         # cpuid info and then chooses the best microarch it can (and replaces
         # the flag), so use that for tune.
-        
+
         if (CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|i386")
             # arg1 might exist if using ccache
             string (STRIP "${CMAKE_C_COMPILER_ARG1}" CC_ARG1)
@@ -191,7 +198,7 @@ else()
                 OUTPUT_VARIABLE _GCC_OUTPUT)
             string(FIND "${_GCC_OUTPUT}" "march" POS)
             string(SUBSTRING "${_GCC_OUTPUT}" ${POS} -1 _GCC_OUTPUT)
-                    string(REGEX REPLACE "march=[ \t]*([^ \n]*)[ \n].*" "\\1"
+            string(REGEX REPLACE "march=[ \t]*([^ \n]*)[ \n].*" "\\1"
                 GNUCC_ARCH "${_GCC_OUTPUT}")
 
             # test the parsed flag
@@ -294,15 +301,16 @@ else()
         set(EXTRA_CXX_FLAGS "${EXTRA_CXX_FLAGS} -fno-omit-frame-pointer")
     endif()
 
+
     if (CMAKE_C_COMPILER_ID MATCHES "Intel")
         set(SKYLAKE_FLAG "-xCORE-AVX512")
     else ()
         set(SKYLAKE_FLAG "-march=skylake-avx512")
+        set(ICELAKE_FLAG "-march=icelake-server")
     endif ()
 endif()
 
 CHECK_INCLUDE_FILES(unistd.h HAVE_UNISTD_H)
-
 if (CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|i386")
     CHECK_INCLUDE_FILES(intrin.h HAVE_C_INTRIN_H)
     CHECK_INCLUDE_FILE_CXX(intrin.h HAVE_CXX_INTRIN_H)
@@ -314,7 +322,7 @@ if (CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|AARCH64")
     CHECK_INCLUDE_FILES(arm_neon.h HAVE_C_ARM_NEON_H)
     CHECK_INCLUDE_FILE_CXX(arm_neon.h HAVE_CXX_ARM_NEON_H)
 endif()
-
+    
 CHECK_FUNCTION_EXISTS(posix_memalign HAVE_POSIX_MEMALIGN)
 CHECK_FUNCTION_EXISTS(_aligned_malloc HAVE__ALIGNED_MALLOC)
 
@@ -423,6 +431,18 @@ if (CXX_UNUSED_CONST_VAR)
     set(EXTRA_CXX_FLAGS "${EXTRA_CXX_FLAGS} -Wno-unused-const-variable")
 endif()
 
+# clang-14 complains about unused-but-set variable.
+CHECK_CXX_COMPILER_FLAG("-Wunused-but-set-variable" CXX_UNUSED_BUT_SET_VAR)
+if (CXX_UNUSED_BUT_SET_VAR)
+    set(EXTRA_CXX_FLAGS "${EXTRA_CXX_FLAGS} -Wno-unused-but-set-variable")
+endif()
+
+# clang-14 complains about using bitwise operator instead of logical ones.
+CHECK_CXX_COMPILER_FLAG("-Wbitwise-instead-of-logical" CXX_BITWISE_INSTEAD_OF_LOGICAL)
+if (CXX_BITWISE_INSTEAD_OF_LOGICAL)
+    set(EXTRA_CXX_FLAGS "${EXTRA_CXX_FLAGS} -Wno-bitwise-instead-of-logical")
+endif()
+
 # gcc 6 complains about type attributes that get ignored, like alignment
 CHECK_CXX_COMPILER_FLAG("-Wignored-attributes" CXX_IGNORED_ATTR)
 if (CXX_IGNORED_ATTR)
@@ -448,8 +468,10 @@ CHECK_CXX_COMPILER_FLAG("-Wunused-variable" CXX_WUNUSED_VARIABLE)
 
 # gcc 10 complains about this
 CHECK_C_COMPILER_FLAG("-Wstringop-overflow" CC_STRINGOP_OVERFLOW)
-if(CC_STRINGOP_OVERFLOW)
+CHECK_CXX_COMPILER_FLAG("-Wstringop-overflow" CXX_STRINGOP_OVERFLOW)
+if(CC_STRINGOP_OVERFLOW OR CXX_STRINGOP_OVERFLOW)
     set(EXTRA_C_FLAGS "${EXTRA_C_FLAGS} -Wno-stringop-overflow")
+    set(EXTRA_CXX_FLAGS "${EXTRA_CXX_FLAGS} -Wno-stringop-overflow")
 endif()
 
 endif()
@@ -486,9 +508,9 @@ endif()
 # Test case for neon function.
 option(UNIT_SIMD "Simd funtion test case, default is OFF" OFF)
 if (CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|AARCH64")
-  if (UNIT_SIMD)
-	add_subdirectory(unit-simd)
-  endif()
+    if (UNIT_SIMD)
+        add_subdirectory(unit-simd)
+    endif()
 endif()
 
 add_subdirectory(util)
@@ -593,7 +615,6 @@ set_source_files_properties(
     PROPERTIES
         COMPILE_FLAGS "${RAGEL_C_FLAGS}")
 
-
 if (CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|i386")
     ragelmaker(src/parser/control_verbs.rl)
 endif()
@@ -620,7 +641,7 @@ set (hs_exec_common_SRCS
 
 set (hs_exec_SRCS
     ${hs_HEADERS}
-    src/hs_version.h
+    src/hs_version.h.in
     src/ue2common.h
     src/allocator.h
     src/crc32.c
@@ -777,7 +798,7 @@ SET (hs_compile_SRCS
     src/grey.h
     src/hs.cpp
     src/hs_internal.h
-    src/hs_version.h
+    src/hs_version.h.in
     src/scratch.h
     src/state.h
     src/ue2common.h
@@ -1246,6 +1267,9 @@ else (FAT_RUNTIME)
     if (NOT BUILD_AVX512)
         set (DISPATCHER_DEFINE "-DDISABLE_AVX512_DISPATCH")
     endif (NOT BUILD_AVX512)
+    if (NOT BUILD_AVX512VBMI)
+        set (DISPATCHER_DEFINE "${DISPATCHER_DEFINE} -DDISABLE_AVX512VBMI_DISPATCH")
+    endif (NOT BUILD_AVX512VBMI)
     set_source_files_properties(src/dispatcher.c PROPERTIES
         COMPILE_FLAGS "-Wno-unused-parameter -Wno-unused-function ${DISPATCHER_DEFINE}")
 
@@ -1278,6 +1302,14 @@ else (FAT_RUNTIME)
                RULE_LAUNCH_COMPILE "${BUILD_WRAPPER} avx512 ${CMAKE_MODULE_PATH}/keep.syms.in"
                )
        endif (BUILD_AVX512)
+       if (BUILD_AVX512VBMI)
+           add_library(hs_exec_avx512vbmi OBJECT ${hs_exec_SRCS} ${hs_exec_avx2_SRCS})
+           list(APPEND RUNTIME_LIBS $<TARGET_OBJECTS:hs_exec_avx512vbmi>)
+           set_target_properties(hs_exec_avx512vbmi PROPERTIES
+               COMPILE_FLAGS "${ICELAKE_FLAG}"
+               RULE_LAUNCH_COMPILE "${BUILD_WRAPPER} avx512vbmi ${CMAKE_MODULE_PATH}/keep.syms.in"
+               )
+       endif (BUILD_AVX512VBMI)
 
        add_library(hs_exec_common OBJECT
            ${hs_exec_common_SRCS}
@@ -1336,6 +1368,15 @@ else (FAT_RUNTIME)
                 RULE_LAUNCH_COMPILE "${BUILD_WRAPPER} avx512 ${CMAKE_MODULE_PATH}/keep.syms.in"
                 )
         endif (BUILD_AVX512)
+        if (BUILD_AVX512VBMI)
+            add_library(hs_exec_shared_avx512vbmi OBJECT ${hs_exec_SRCS} ${hs_exec_avx2_SRCS})
+            list(APPEND RUNTIME_SHLIBS $<TARGET_OBJECTS:hs_exec_shared_avx512vbmi>)
+            set_target_properties(hs_exec_shared_avx512vbmi PROPERTIES
+                COMPILE_FLAGS "${ICELAKE_FLAG}"
+                POSITION_INDEPENDENT_CODE TRUE
+                RULE_LAUNCH_COMPILE "${BUILD_WRAPPER} avx512vbmi ${CMAKE_MODULE_PATH}/keep.syms.in"
+                )
+        endif (BUILD_AVX512VBMI)
         add_library(hs_exec_common_shared OBJECT
         ${hs_exec_common_SRCS}
         src/dispatcher.c
@@ -1429,7 +1470,7 @@ if (NOT BUILD_STATIC_LIBS)
     add_library(hs ALIAS hs_shared)
 endif ()
 
-
-if(NOT WIN32)
+option(BUILD_EXAMPLES "Build Hyperscan example code (default TRUE)" TRUE)
+if(NOT WIN32 AND BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif()

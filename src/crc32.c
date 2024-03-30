@@ -72,7 +72,6 @@ u32 crc32c_neon(u32 running_crc, const unsigned char * p_buf, const size_t lengt
 }
 #endif
 
-
 #if !defined(HAVE_SSE42)
 
 /***

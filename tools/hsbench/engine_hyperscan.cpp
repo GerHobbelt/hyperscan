@@ -175,7 +175,7 @@ unique_ptr<EngineStream> EngineHyperscan::streamOpen(EngineContext &ectx,
         return nullptr;
     }
     stream->sn = streamId;
-    return move(stream);
+    return stream;
 }
 
 void EngineHyperscan::streamClose(unique_ptr<EngineStream> stream,
@@ -274,6 +274,17 @@ void EngineHyperscan::printStats() const {
     printf("Compile time:      %0.3Lf seconds\n", compile_stats.compileSecs);
     printf("Peak heap usage:   %u bytes\n", compile_stats.peakMemorySize);
 #endif
+}
+
+void EngineHyperscan::printCsvStats() const {
+    printf(",\"%s\"", compile_stats.signatures.c_str());
+    printf(",\"%zu\"", compile_stats.expressionCount);
+    printf(",\"0x%x\"", compile_stats.crc32);
+    printf(",\"%zu\"", compile_stats.compiledSize);
+    printf(",\"%zu\"", compile_stats.streamSize);
+    printf(",\"%zu\"", compile_stats.scratchSize);
+    printf(",\"%0.3Lf\"", compile_stats.compileSecs);
+    printf(",\"%u\"", compile_stats.peakMemorySize);
 }
 
 void EngineHyperscan::sqlStats(SqlDB &sqldb) const {
