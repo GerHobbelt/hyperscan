@@ -18,7 +18,7 @@ endif ()
 
 if (ARCH_ARM32 OR ARCH_AARCH64)
     CHECK_C_SOURCE_COMPILES("#include <${INTRIN_INC_H}>
-int main() {
+int main(void) {
     int32x4_t a = vdupq_n_s32(1);
     (void)a;
 }" HAVE_NEON)
@@ -29,7 +29,7 @@ if (ARCH_AARCH64)
     if (BUILD_SVE2_BITPERM)
         set(CMAKE_C_FLAGS "-march=${GNUCC_ARCH} ${CMAKE_C_FLAGS}")
         CHECK_C_SOURCE_COMPILES("#include <arm_sve.h>
-        int main() {
+        int main(void) {
             svuint8_t a = svbext(svdup_u8(1), svdup_u8(2));
             (void)a;
         }" HAVE_SVE2_BITPERM)
@@ -40,7 +40,7 @@ if (ARCH_AARCH64)
     if (BUILD_SVE2)
         set(CMAKE_C_FLAGS "-march=${GNUCC_ARCH} ${CMAKE_C_FLAGS}")
         CHECK_C_SOURCE_COMPILES("#include <arm_sve.h>
-        int main() {
+        int main(void) {
             svuint8_t a = svbsl(svdup_u8(1), svdup_u8(2), svdup_u8(3));
             (void)a;
         }" HAVE_SVE2)
@@ -51,7 +51,7 @@ if (ARCH_AARCH64)
     if (BUILD_SVE)
         set(CMAKE_C_FLAGS "-march=${GNUCC_ARCH} ${CMAKE_C_FLAGS}")
         CHECK_C_SOURCE_COMPILES("#include <arm_sve.h>
-        int main() {
+        int main(void) {
             svuint8_t a = svdup_u8(1);
             (void)a;
         }" HAVE_SVE)
@@ -100,7 +100,7 @@ endif ()
 if (ARCH_IA32 OR ARCH_X86_64)
     # ensure we have the minimum of SSE4.2 - call a SSE4.2 intrinsic
     CHECK_C_SOURCE_COMPILES("#include <${INTRIN_INC_H}>
-int main() {
+int main(void) {
     __m128i a = _mm_set1_epi8(1);
     (void)_mm_shuffle_epi8(a, a);
 }" HAVE_SSE42)
@@ -111,7 +111,7 @@ int main() {
 #error no avx2
 #endif
 
-int main(){
+int main(void){
     __m256i z = _mm256_setzero_si256();
     (void)_mm256_xor_si256(z, z);
 }" HAVE_AVX2)
@@ -122,7 +122,7 @@ int main(){
 #error no avx512bw
 #endif
 
-int main(){
+int main(void){
     __m512i z = _mm512_setzero_si512();
     (void)_mm512_abs_epi8(z);
 }" HAVE_AVX512)
@@ -133,7 +133,7 @@ int main(){
 #error no avx512vbmi
 #endif
 
-int main(){
+int main(void){
     __m512i a = _mm512_set1_epi8(0xFF);
     __m512i idx = _mm512_set_epi64(3ULL, 2ULL, 1ULL, 0ULL, 7ULL, 6ULL, 5ULL, 4ULL);
     (void)_mm512_permutexvar_epi8(idx, a);
@@ -142,13 +142,13 @@ int main(){
 
 elseif (ARCH_ARM32 OR ARCH_AARCH64)
     CHECK_C_SOURCE_COMPILES("#include <${INTRIN_INC_H}>
-int main() {
+int main(void) {
     int32x4_t a = vdupq_n_s32(1);
     (void)a;
 }" HAVE_NEON)
 elseif (ARCH_PPC64EL)
     CHECK_C_SOURCE_COMPILES("#include <${INTRIN_INC_H}>
-int main() {
+int main(void) {
     vector int a = vec_splat_s32(1);
     (void)a;
 }" HAVE_VSX)
